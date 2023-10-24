@@ -44,6 +44,7 @@ class _startState extends State<start> {
       home: Scaffold(
         //body: activeScreen,
         body: screenWidget,
+        backgroundColor: Colors.grey,
       ),
     );
   }

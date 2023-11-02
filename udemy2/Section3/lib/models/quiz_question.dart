@@ -5,3 +5,4 @@ class QuizQuestion{
   final List<String> answers;
 
 }
+

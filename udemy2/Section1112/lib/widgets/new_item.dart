@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:section1112/data/categories.dart';
+import 'package:section1112/models/category.dart';
+import 'package:section1112/models/grocery_item.dart';
 
 class NewItem extends StatefulWidget {
   const NewItem({Key? key}) : super(key: key);
@@ -9,11 +11,25 @@ class NewItem extends StatefulWidget {
 }
 
 class _NewItemState extends State<NewItem> {
-
   final _formKey = GlobalKey<FormState>();
+  var _enteredName = '';
+  var _enterQuantity = 1;
+  var _enterCategory = categories[Categories.vegetables]!;
 
   void _saveitem() {
-    _formKey.currentState!.validate();
+    if (_formKey.currentState!.validate()) {
+      _formKey.currentState!.save();
+      print(_enteredName);
+      print(_enterQuantity);
+      print(_enterCategory);
+      Navigator.of(context).pop(
+        GroceryItem(
+            id: DateTime.now().toString(),
+            name: _enteredName,
+            quantity: _enterQuantity,
+            category: _enterCategory),
+      );
+    }
   }
 
   @override
@@ -43,7 +59,13 @@ class _NewItemState extends State<NewItem> {
                     return 'must be between 1 and 50 characters.';
                   }
                   return null;
-                },// 트리거가 없어서 실행 X 유효성 검사 논리
+                }, // 트리거가 없어서 실행 X 유효성 검사 논리
+                onSaved: (value) {
+                  if (value == null) {
+                    return;
+                  }
+                  _enteredName = value;
+                },
               ), // instead of TextField() -> 문제
               Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
@@ -55,15 +77,19 @@ class _NewItemState extends State<NewItem> {
                         label: Text('Quantity'),
                       ),
                       keyboardType: TextInputType.number,
-                      initialValue: '1',
+                      initialValue: _enterQuantity.toString(),
                       validator: (value) {
                         if (value == null ||
                             value.isEmpty ||
-                            int.tryParse(value) == null || // int면 숫자 반환, 아니면 null
+                            int.tryParse(value) ==
+                                null || // int면 숫자 반환, 아니면 null
                             int.tryParse(value)! <= 0) {
                           return 'must be a valid, positive number.';
                         }
                         return null;
+                      },
+                      onSaved: (value) {
+                        _enterQuantity = int.parse(value!);
                       },
                     ),
                   ),
@@ -71,26 +97,32 @@ class _NewItemState extends State<NewItem> {
                     width: 8,
                   ),
                   Expanded(
-                    child: DropdownButtonFormField(items: [
-                      for (final catecory in categories.entries)
-                        DropdownMenuItem(
-                          value: catecory.value,
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 16,
-                                height: 16,
-                                color: catecory.value.color,
-                              ),
-                              SizedBox(
-                                width: 6,
-                              ),
-                              Text(catecory.value.title),
-                            ],
+                    child: DropdownButtonFormField(
+                      value: _enterCategory,
+                      items: [
+                        for (final catecory in categories.entries)
+                          DropdownMenuItem(
+                            value: catecory.value,
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 16,
+                                  height: 16,
+                                  color: catecory.value.color,
+                                ),
+                                SizedBox(
+                                  width: 6,
+                                ),
+                                Text(catecory.value.title),
+                              ],
+                            ),
                           ),
-                        ),
-                    ], onChanged: (value) {}),
-                  )
+                      ],
+                      onChanged: (value) {
+                        _enterCategory = value!;
+                      },
+                    ),
+                  ),
                 ],
               ),
               SizedBox(

@@ -1,7 +1,10 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:section1112/data/categories.dart';
 import 'package:section1112/models/category.dart';
 import 'package:section1112/models/grocery_item.dart';
+import 'package:http/http.dart' as http;
 
 class NewItem extends StatefulWidget {
   const NewItem({Key? key}) : super(key: key);
@@ -15,19 +18,49 @@ class _NewItemState extends State<NewItem> {
   var _enteredName = '';
   var _enterQuantity = 1;
   var _enterCategory = categories[Categories.vegetables]!;
+  var _isSending = false;
 
-  void _saveitem() {
+  void _saveitem() async {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
+      setState(() {
+        _isSending = true;
+      });
+      final url = Uri.https(
+          'udemysection12-default-rtdb.asia-southeast1.firebasedatabase.app',
+          'shopping-list.json');
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: json.encode(
+          {
+            'name': _enteredName,
+            'quantity': _enterQuantity,
+            'category': _enterCategory.title,
+          },
+        ),
+      );
+
+      print(response.body);
+
       print(_enteredName);
       print(_enterQuantity);
       print(_enterCategory);
+      //Navigator.of(context).pop(      );
+
+      final Map<String, dynamic> resData = json.decode(response.body);
+      if (!context.mounted) {
+        return;
+      }
       Navigator.of(context).pop(
         GroceryItem(
-            id: DateTime.now().toString(),
-            name: _enteredName,
-            quantity: _enterQuantity,
-            category: _enterCategory),
+          id: resData['name'],
+          name: _enteredName,
+          quantity: _enterQuantity,
+          category: _enterCategory,
+        ),
       );
     }
   }
@@ -132,14 +165,22 @@ class _NewItemState extends State<NewItem> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   TextButton(
-                    onPressed: () {
-                      _formKey.currentState!.reset();
-                    },
+                    onPressed: _isSending
+                        ? null
+                        : () {
+                            _formKey.currentState!.reset();
+                          },
                     child: Text('Reset'),
                   ),
                   ElevatedButton(
-                    onPressed: _saveitem,
-                    child: Text('Add Item'),
+                    onPressed: _isSending ? null : _saveitem,
+                    child: _isSending
+                        ? SizedBox(
+                            height: 16,
+                            width: 16,
+                            child: CircularProgressIndicator(),
+                          )
+                        : Text('Add Item'),
                   ),
                 ],
               )
